@@ -92,13 +92,17 @@ def transfer_D(u0,y,filepath):
     return y.real + u0
 
 def main():
-    p = get_data() - 2
+    p = get_data()
     with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
         data = json.load(f)
     Pc = data["临界压力(MPa)"]
 
-    if p > Pc:mark = 1
-    else: mark = 2
+    if p > Pc:
+        mark = 1
+        p = p - Pc
+    else: 
+        mark = 2
+        p = p - 2
 
     popt_D,D0 = select(mark)
 
