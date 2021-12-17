@@ -3,6 +3,7 @@ import os
 import numpy as np
 import ctREFPROP.ctREFPROP as ct
 import json
+import matplotlib.pylab as plt
 
 
 
@@ -13,24 +14,24 @@ r.SETPATHdll(os.environ['RPPREFIX'])
 
 # 定义初试数据
 def init_data():
-    T0 = 273.15-60
+    p0 = 2*1000
     
     # 组分比例
     mix_ratio = [0.2,0.8] 
     # 节点数
     num = 200
-    p_start = 2000 # 2MPa
-    p_end = 40000 # 40MPa
-    p_range = np.linspace(p_start,p_end,num)
+    T_start = 213.15 # 2MPa
+    T_end = 313.15 # 40MPa
+    T_range = np.linspace(T_start,T_end,num)
 
     # 存放各物性参数
     wm = np.zeros(num) # 摩尔质量比
     D = np.zeros(num) # 密度
-    return T0,p_range,mix_ratio,wm,D
+    return p0,T_range,mix_ratio,wm,D
 
 # 定义get_z0函数获取T0下不同压力下的物性
 
-def get_z0(T0,p,mix_ratio,wm,D):
+def get_z0(p0,T,mix_ratio,wm,D):
     ''''
     参数：
         T0:一大于临界温度的温度值
@@ -48,34 +49,37 @@ def get_z0(T0,p,mix_ratio,wm,D):
     # 存放数据
     # stor_z0(wm,D,Cp,eta,tcx,len(p))
 
-    for i in range(len(p)):
+    for i in range(len(T)):
         # 通过REFPROP获取物性
-        D[i], Dl, Dv, x, y, q, e, h, s, Cv, Cp, w, ierr, herr = r.TPFLSHdll(T0,p[i],mix_ratio)
+        D[i], Dl, Dv, x, y, q, e, h, s, Cv, Cp, w, ierr, herr = r.TPFLSHdll(T[i],p0,mix_ratio)
         wm[i] = r.WMOLdll(mix_ratio)
-        eta, tcx, ierr, herr = r.TRNPRPdll(T0,D[i],x)
-    data_storage(p,wm,D,Tc,Pc)
+        eta, tcx, ierr, herr = r.TRNPRPdll(T[i],D[i],x)
+    data_storage(T,p0,wm,D,Tc,Pc)
     # return wm,D,Cp,eta,tcx       
 
-def data_storage(p,wm,D,Tc,Pc):
+def data_storage(T,p0,wm,D,Tc,Pc):
     data = {
-        '压力(MPa)': (p/1000).tolist(),
+        '温度(K)': (T).tolist(),
         '密度(kg/m3)':(D*wm).tolist(),
         # '比热容[J/(kg·K)]':(Cp/wm).tolist(),
         # '粘度[microPa.s (10^-6 Pa.s)]':(eta).tolist(),
         # '导热系数[W/(m·K)]':tcx.tolist(),
+        '参考压力(MPa)':p0/1000,
         '临界温度(K)':Tc,
         '临界压力(MPa)':Pc/1000
         }
+    # plt.plot(T,D*wm)
+    # plt.show()    
     json_data = json.dumps(data,ensure_ascii=False)
-    with open('Pressure-Density\\Data\\original_p_D_data.json','w',encoding='utf-8') as f:       
+    with open('Temperature-Density\\Data\\original_T_D_data.json','w',encoding='utf-8') as f:       
             f.write(json_data)
     
 
 # 用以获取在T0下的物性
 def main():
-    T0,p_range,mix_ratio,wm,D=init_data()
+    p0,T_range,mix_ratio,wm,D=init_data()
     # wm,D,Cp,eta,tcx,Tc,Pc 
-    get_z0(T0,p_range,mix_ratio,wm,D) 
+    get_z0(p0,T_range,mix_ratio,wm,D) 
     # 存储原始数据
     # data_storage(p_range,wm,D,Cp,eta,tcx,Tc,Pc) 
 

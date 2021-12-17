@@ -3,13 +3,107 @@ from scipy.optimize import curve_fit
 import matplotlib.pylab as plt
 import numpy as np
 import json
+import cmath
+from math import sqrt
 
+def get_data():
+    # p = input('请输入压力（MPa）:')
+    p = 2
+    return float(p)
+  
+def select(mark):
 
+    if mark == 1:
+        with open('Pressure-Density\\Data\\D0_supercritical_coefficient.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+        popt_D = np.array(data['p-D'])
+        with open('Pressure-Density\\Data\\transfer_supercritical_data.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+        D0 = data['密度(kg/m3)']
+        
+        
+    elif mark == 2:
+        with open('Pressure-Density\\Data\\D0_superheat_coefficient.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+        popt_D = np.array(data['p-D'])
+        with open('Pressure-Density\\Data\\transfer_superheat_data.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+        D0 = data['密度(kg/m3)']
+                
+    return popt_D,D0
+
+def solve_z(p,popt,u0,filepath):
+    '''
+        显式求解方法
+    ''' 
+        # 显式求解系数
+    a = popt[2]
+    b = popt[1]*p + popt[5]
+    c = popt[0]*((p)**2) + popt[4]*p + popt[7]
+    d = (p)**3 + popt[3]*((p)**2) + popt[6]*p
+
+    # 将方程转化为x3+rx=q的形式
+    r = float((c/a - (b**2)/(3*a**2)))
+    q = float((d/a + (2*b**3)/(27*a**3) - (b*c)/(3*a**2)))
+    # 判别式Δ>0有一个实根；Δ<0有三个实根
+    # 尝试显式计算 D
+    
+    k = 2j/2
+    w1 = (1/2)*(-1 + sqrt(3)*k)
+    w2 = (1/2)*(-1 - sqrt(3)*k)
+    
+    y3 = w2*(((-1/2)*q+cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) + w1*(((-1/2)*q-cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) - b/(3*a)
+
+    D = y3.real + u0
+    
+    return D
+
+def transfer_D(u0,y,filepath):
+    # y1,y2,y3 = solve_z()
+    # 需要修改成对应转换关系
+    data = {
+    # 'y1':((y1.real + u0)).tolist(),
+    # 'y2':((y2.real + u0)).tolist(),
+    'D':((y.real + u0)).tolist(),
+    }
+    json_data = json.dumps(data,ensure_ascii=False)
+    with open(filepath,'w',encoding='utf-8') as f:       
+            f.write(json_data)
+    return y.real + u0
+
+def get_D0(p):
+    # p = get_data()
+    with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
+        data = json.load(f)
+    Pc = data["临界压力(MPa)"]
+
+    if p > Pc:
+        mark = 1
+        p = p - Pc
+    else: 
+        mark = 2
+        p = p - 2
+
+    popt_D,D0 = select(mark)
+
+    D = solve_z(p,popt_D,D0,'Pressure-Density\\Data\\fitting_D.json')
+
+    print('方程系数为：',popt_D)
+    print('该压力下对应密度为',D)
+    # select()
+    
+        
 
 # 隐函数拟合形式
-def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8):
-    u,v = X
-    return (u**3) + a1*(u**2)*v + a2*u*(v**2) + a3*(v**3) + a4*(u**2) + a5*u*v + a6*(v**2) + a7*u + a8*v 
+def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10):
+    u,T,mark = X
+    with open('data\\T_data\\original_T_z0_data.json','r',encoding='utf-8') as f:
+       data = json.load(f)
+    u0 = get_D0(p)
+    T0 = 273.15-80
+
+    a = (1/u0 - 1/u) + a1*(T0/u0 - T/u) + a2*(T0**2/u0 - T**2/u) + a3*(T0**3/u0 - T**3/u) + a4*(1/u0**2 - 1/u**2) + a5*(T0/u0**2 - T/u**2) + a6*(T0**2/u0**2 - T**2/u**2) + a7*(T0**3/u0**2 - T**3/u**2) + a8*(1/u0**3 - 1/u**3) + a9*(T0/u0**3 - T/u**3) + a10*(T0**2/u0**3 - T**2/u**3) + a10*(T0**3/u0**3 - T**2/u**3)
+    return a
     
 # 读入原始数据
 def load_z0():
