@@ -18,7 +18,7 @@ def init_data():
     # 组分比例
     mix_ratio = [0.2,0.8] 
     # 节点数
-    num = 80
+    num = 200
     p_start = 2000 # 2MPa
     p_end = 40000 # 40MPa
     p_range = np.linspace(p_start,p_end,num)

@@ -64,7 +64,8 @@ def load_fitting_data(filepath):
        return U1,U2,U3
 
 # with open('data\\p_data\\supercritical.json','r',encoding='utf-8') as f:
-with open('Pressure-Density\Data\original_p_D_data.json','r',encoding='utf-8') as f:
+# with open('Pressure-Density\\Data\\supercritical.json','r',encoding='utf-8') as f:
+with open('Pressure-Density\\Data\\superheat.json','r',encoding='utf-8') as f:
               data = json.load(f)
 p = np.array(data['压力(MPa)'])
 D = np.array(data['密度(kg/m3)'])
@@ -78,6 +79,7 @@ D = np.array(data['密度(kg/m3)'])
 # Cp1,Cp2,Cp3 = load_fitting_data('data\\p_data\\u_fitting_supercritical_Cp.json')
 # tcx1,tcx2,tcx3= load_fitting_data('data\\p_data\\u_fitting_supercritical_tcx.json')
 # eta1,eta2,eta3= load_fitting_data('data\\p_data\\u_fitting_supercritical_eta.json')
+# D1,D2,D3= load_fitting_data('Pressure-Density\\Data\\u_fitting_D.json')
 D1,D2,D3= load_fitting_data('Pressure-Density\\Data\\u_fitting_D.json')
 # Cp1,Cp2,Cp3 = load_fitting_data('data\\p_data\\u_fitting_Cp.json')
 # tcx1,tcx2,tcx3= load_fitting_data('data\\p_data\\u_fitting_tcx.json')
