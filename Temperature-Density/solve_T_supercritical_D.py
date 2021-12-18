@@ -6,9 +6,9 @@ import cmath
 
 # 从json中读取系数
 def load_coefficient():
-    with open('Pressure-Density\\Data\\D0_supercritical_coefficient.json','r',encoding='utf-8') as f:
+    with open('Temperature-Density\\Data\\D0_coefficient.json','r',encoding='utf-8') as f:
         data = json.load(f)
-    popt_D = np.array(data['p-D'])
+    popt_D = np.array(data['T-D'])
     # popt_Cp = np.array(data['p-Cp'])
     # popt_eta = np.array(data['p-eta'])
     # popt_tcx = np.array(data['p-tcx'])
@@ -16,7 +16,7 @@ def load_coefficient():
 
 # 从json中读取u0
 def load_fitting_nodes():
-    with open('Pressure-Density\\Data\\supercritical_fitting_nodes.json','r',encoding='utf-8') as f:
+    with open('Temperature-Density\Data\fitting_nodes.json','r',encoding='utf-8') as f:
        data = json.load(f)
     p = np.array(data['压力(MPa)'])
     D = np.array(data['密度(kg/m3)'])

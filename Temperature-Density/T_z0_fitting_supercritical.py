@@ -32,7 +32,7 @@ def select(mark):
                 
     return popt_D,D0
 
-def solve_z(p,popt,u0,filepath):
+def solve_z(p,popt,u0):
     '''
         显式求解方法
     ''' 
@@ -58,19 +58,6 @@ def solve_z(p,popt,u0,filepath):
     
     return D
 
-def transfer_D(u0,y,filepath):
-    # y1,y2,y3 = solve_z()
-    # 需要修改成对应转换关系
-    data = {
-    # 'y1':((y1.real + u0)).tolist(),
-    # 'y2':((y2.real + u0)).tolist(),
-    'D':((y.real + u0)).tolist(),
-    }
-    json_data = json.dumps(data,ensure_ascii=False)
-    with open(filepath,'w',encoding='utf-8') as f:       
-            f.write(json_data)
-    return y.real + u0
-
 def get_D0(p):
     # p = get_data()
     with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
@@ -86,46 +73,49 @@ def get_D0(p):
 
     popt_D,D0 = select(mark)
 
-    D = solve_z(p,popt_D,D0,'Pressure-Density\\Data\\fitting_D.json')
+    D = solve_z(p,popt_D,D0)
 
-    print('方程系数为：',popt_D)
-    print('该压力下对应密度为',D)
-    # select()
+    # print('方程系数为：',popt_D)
+    # print('该压力下对应密度为',D)
+    return D
     
         
 
 # 隐函数拟合形式
-def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10):
-    u,T,mark = X
-    with open('data\\T_data\\original_T_z0_data.json','r',encoding='utf-8') as f:
+def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11):
+    u,T = X
+    u[0] = 0.001
+    # u0 = u0[0]
+    with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
        data = json.load(f)
-    u0 = get_D0(p)
-    T0 = 273.15-80
-
-    a = (1/u0 - 1/u) + a1*(T0/u0 - T/u) + a2*(T0**2/u0 - T**2/u) + a3*(T0**3/u0 - T**3/u) + a4*(1/u0**2 - 1/u**2) + a5*(T0/u0**2 - T/u**2) + a6*(T0**2/u0**2 - T**2/u**2) + a7*(T0**3/u0**2 - T**3/u**2) + a8*(1/u0**3 - 1/u**3) + a9*(T0/u0**3 - T/u**3) + a10*(T0**2/u0**3 - T**2/u**3) + a10*(T0**3/u0**3 - T**2/u**3)
-    return a
+    p0 = data['参考压力(MPa)']
+    # u0 = np.zeros(len(T))
+    u0 = get_D0(p0)
+    T0 = 273.15-60
+    return (1/u0 - 1/u) + a1*(T0/u0 - T/u) + a2*((T0**2)/u0 - (T**2)/u) + a3*((T0**3)/u0 - (T**3)/u) + a4*(1/(u0**2) - 1/(u**2)) + a5*(T0/(u0**2) - T/(u**2)) + a6*((T0**2)/(u0**2) - (T**2)/(u**2)) + a7*((T0**3)/(u0**2) - (T**3)/(u**2)) + a8*(1/(u0**3) - 1/(u**3)) + a9*(T0/(u0**3) - T/(u**3)) + a10*((T0**2)/(u0**3) - (T**2)/(u**3)) + a11*((T0**3)/(u0**3) - (T**3)/(u**3))
+    
     
 # 读入原始数据
 def load_z0():
-    with open('Pressure-Density\\Data\\supercritical.json','r',encoding='utf-8') as f:
+    with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
        data = json.load(f)
-    p = np.array(data['压力(MPa)'])
+    T = np.array(data['温度(K)'])
     D = np.array(data['密度(kg/m3)'])
     # Cp = np.array(data['比热容[J/(kg·K)]'])
     # eta = np.array(data['粘度[microPa.s (10^-6 Pa.s)]'])
     # tcx = np.array(data['导热系数[W/(m·K)]'])
     Tc = data['临界温度(K)']
     Pc = data['临界压力(MPa)']
-    return p,D,Tc,Pc
+    return T,D,Tc,Pc
 
 def trans_func():
     """
     转换函数，执行z*=f(z)\n
     做差：u = z* - z*0
     """ 
-    p,D,Tc,Pc = load_z0()
+    T,D,Tc,Pc = load_z0()
     # 自变量p,无需转换，但是需要减去初值 v = p - p0，记作p_u
-    p_u = p - p[0]
+    T_u = T - T[0]
     # 对自变量z执行一个简单的转换
     # D_t = (D - 100) * 0.15
     D_t = D
@@ -133,7 +123,7 @@ def trans_func():
     # eta_t = eta - 10
     # tcx_t = tcx*100
     # 存储转换后的物性参数初值，用以后边的还原计算
-    udata_storage(p[0],D_t[0],'Pressure-Density\\Data\\transfer_supercritical_data.json')
+    udata_storage(T[0],D_t[0],'Temperature-Density\\Data\\transfer_data.json')
     # 对自变量减去初值,作为隐式拟合模型中的u，记作z_u
     D_u = D_t - D_t[0]
     # Cp_u = Cp_t[0] - Cp_t
@@ -142,39 +132,38 @@ def trans_func():
     # 用于作为拟合节点
     # plt.plot(p,Cp_u)
     # plt.show()
-    udata_storage(p_u,D_u,'Pressure-Density\\Data\\supercritical_fitting_nodes.json')
+    udata_storage(T_u,D_u,'Temperature-Density\Data\\fitting_nodes.json')
 
-    return p_u,D_u
+    return T_u,D_u
 
 # 用最小二乘法进行拟合，获取获取参数 a1 - a8
-def fitting_func(p,D):
+def fitting_func(T,D):
     z = 0 # 隐式方程的解，及z=F(x,y)=0
-    popt_D, pcov1 = curve_fit(implicit_func, (p, D), z)
+    
+    popt_D, pcov1 = curve_fit(implicit_func, (T, D), z)
     # popt_Cp, pcov2 = curve_fit(implicit_func, (p, Cp), z)
     # popt_eta, pcov3 = curve_fit(implicit_func, (p, eta), z)
     # popt_tcx, pcov4 = curve_fit(implicit_func, (p, tcx), z)
-   
-    # print('最大误差%.3f\n'%(max(abs(implicit_func((p, D),*popt_D)))))
+    e = max(abs(implicit_func((T, D),*popt_D)))
+    print('最大误差%.3f\n'%(e))
     # print('最大误差%.3f\n'%(max(abs(implicit_func((p, Cp),*popt_Cp)))))
-    
-
     return popt_D
 
 def coefficient_storage(popt_D):
     data = {
-        'p-D': popt_D.tolist(),
+        'T-D': popt_D.tolist(),
         # 'p-Cp':popt_Cp.tolist(),
         # 'p-eta':popt_eta.tolist(),
         # 'p-tcx':popt_tcx.tolist(),
         }
     json_data = json.dumps(data,ensure_ascii=False)
-    with open('Pressure-Density\\Data\\D0_supercritical_coefficient.json','w',encoding='utf-8') as f:       
+    with open('Temperature-Density\\Data\\D0_coefficient.json','w',encoding='utf-8') as f:       
             f.write(json_data)
     pass
 
-def udata_storage(p,D,filepath):
+def udata_storage(T,D,filepath):
     data = {
-        '压力(MPa)': p.tolist(),
+        '温度(K)': T.tolist(),
         '密度(kg/m3)':D.tolist(),
         # '比热容[J/(kg·K)]':Cp.tolist(),
         # '粘度[microPa.s (10^-6 Pa.s)]':eta.tolist(),
@@ -186,8 +175,8 @@ def udata_storage(p,D,filepath):
     pass
 
 def main():
-    p_u,D_u = trans_func()
-    popt_D= fitting_func(p_u,D_u,)
+    T_u,D_u = trans_func()
+    popt_D= fitting_func(T_u,D_u,)
     
     coefficient_storage(popt_D)
     
