@@ -14,14 +14,14 @@ r.SETPATHdll(os.environ['RPPREFIX'])
 
 # 定义初试数据
 def init_data():
-    p0 = 2*1000
+    p0 = 10*1000
     
     # 组分比例
     mix_ratio = [0.2,0.8] 
     # 节点数
     num = 200
-    T_start = 213.15 # 2MPa
-    T_end = 313.15 # 40MPa
+    T_start = 213.15 
+    T_end = 313.15 
     T_range = np.linspace(T_start,T_end,num)
 
     # 存放各物性参数

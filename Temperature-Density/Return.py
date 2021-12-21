@@ -6,8 +6,9 @@ import cmath
 import json
 
 def get_data():
-    p = input('请输入压力（MPa）:')
-    return float(p)
+    # p = input('请输入压力（MPa）:')
+    T = input('请输入温度（K）:')
+    return float(T)
   
 def select(mark):
 
@@ -18,8 +19,7 @@ def select(mark):
         with open('Pressure-Density\\Data\\transfer_supercritical_data.json','r',encoding='utf-8') as f:
             data = json.load(f)
         D0 = data['密度(kg/m3)']
-        
-        
+               
     elif mark == 2:
         with open('Pressure-Density\\Data\\D0_superheat_coefficient.json','r',encoding='utf-8') as f:
             data = json.load(f)
@@ -30,7 +30,7 @@ def select(mark):
                 
     return popt_D,D0
 
-def solve_z(p,popt,u0,filepath):
+def solve_P(p,popt,u0):
     '''
         显式求解方法
     ''' 
@@ -65,38 +65,59 @@ def solve_z(p,popt,u0,filepath):
     y3 = w2*(((-1/2)*q+cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) + w1*(((-1/2)*q-cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) - b/(3*a)
 
     D = y3.real + u0
-    # transfer_D(u0,y3,filepath)
-        # y1,y2,y3 = solve_z()
-    # 需要修改成对应转换关系
-    # data = {
-    # # 'y1':((y1.real + u0)).tolist(),
-    # # 'y2':((y2.real + u0)).tolist(),
-    # 'D':((y3.real + u0)).tolist(),
-    # }
-    # json_data = json.dumps(data,ensure_ascii=False)
-    # with open(filepath,'w',encoding='utf-8') as f:       
-    #         f.write(json_data)
+    
     return D
 
-def transfer_D(u0,y,filepath):
-    # y1,y2,y3 = solve_z()
-    # 需要修改成对应转换关系
-    data = {
-    # 'y1':((y1.real + u0)).tolist(),
-    # 'y2':((y2.real + u0)).tolist(),
-    'D':((y.real + u0)).tolist(),
-    }
-    json_data = json.dumps(data,ensure_ascii=False)
-    with open(filepath,'w',encoding='utf-8') as f:       
-            f.write(json_data)
-    return y.real + u0
+def solve_T(T,popt,u0,T0,ut0):
+   
+    # 显式求解系数
+    a = popt[10] + popt[6]*T + popt[2]*T**2   
+    b = popt[9] + popt[5]*T + popt[1]*T**2
+    c = popt[8] + popt[4]*T + popt[0]*T**2
+    d = popt[7] + popt[3]*T + T**2 - (1/u0 + popt[0]*(T0/u0) + popt[1]*(T0**2/u0) + popt[2]*(T0**3/u0) + popt[3]*(1/u0**2)+ popt[4]*(T0/u0**2) + popt[5]*(T0**2/u0**2) + popt[6]*(T0**3/u0**2) + popt[7]*(1/u0**3) + popt[8]*(T0/u0**3) + popt[9]*(T0**2/u0**3) +popt[10]*(T0**3/u0**3))*T**3
+
+    # 将方程转化为x3+rx=q的形式
+    r = float((c/a - (b**2)/(3*a**2)))
+    q = float((d/a + (2*b**3)/(27*a**3) - (b*c)/(3*a**2)))
+    # 判别式Δ>0有一个实根；Δ<0有三个实根
+    # 尝试显式计算 D
+    
+    k = 2j/2
+    w1 = (1/2)*(-1 + sqrt(3)*k)
+    w2 = (1/2)*(-1 - sqrt(3)*k)
+    
+    # 显式三次方程解法
+    y1 = ((-1/2)*q + cmath.sqrt((q/2)**2 + (r/3)**3))**(1/3) + ((-1/2)*q - cmath.sqrt((q/2)**2 + (r/3)**3))**(1/3) - b/(3*a)
+    
+    y2 = w1*(((-1/2)*q+cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) + w2*(((-1/2)*q - cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) - b/(3*a)
+    
+    y3 = w2*(((-1/2)*q+cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) + w1*(((-1/2)*q-cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) - b/(3*a)
+
+    D = y3.real + ut0
+
+    return D
 
 def main():
-    p = get_data()
+    T = get_data()
     with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
         data = json.load(f)
+    # p =data["参考压力(MPa)"]
     Pc = data["临界压力(MPa)"]
-
+    with open('Temperature-Density\\Data\\transfer_data.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+    T_Dt0 = data['密度(kg/m3)']   
+    with open('Temperature-Density\\Data\\D0_coefficient.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+    popt_T_D = np.array(data['T-D'])
+    with open('Temperature-Density\\Data\\D0_coefficient.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+    popt_T_D = np.array(data['T-D'])
+    T0 = data['T0']
+    with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
+            data = json.load(f)
+    p = data["参考压力(MPa)"]
+    # u0 = data['u0']
+  
     if p > Pc:
         mark = 1
         p = p - Pc
@@ -104,13 +125,15 @@ def main():
         mark = 2
         p = p - 2
 
-    popt_D,D0 = select(mark)
+    popt_p_D,p_Dt0 = select(mark)
 
-    D = solve_z(p,popt_D,D0,'Pressure-Density\\Data\\fitting_D.json')
+    # D0 = solve_P(p,popt_p_D,p_Dt0)
 
-    print('方程系数为：',popt_D)
+    D = solve_T(T,popt_T_D,p_Dt0,T0,T_Dt0)
+
+    # print('方程系数为：',popt_T_D)
     print('该压力下对应密度为',D)
-    # select()
+    
     
         
 

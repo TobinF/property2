@@ -7,8 +7,8 @@ import cmath
 from math import sqrt
 
 def get_data():
-    # p = input('请输入压力（MPa）:')
-    p = 2
+    p = input('请输入压力（MPa）:')
+    # p = 2
     return float(p)
   
 def select(mark):
@@ -146,12 +146,20 @@ def fitting_func(T,D):
     # popt_tcx, pcov4 = curve_fit(implicit_func, (p, tcx), z)
     e = max(abs(implicit_func((T, D),*popt_D)))
     print('最大误差%.3f\n'%(e))
+    with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
+       data = json.load(f)
+    p0 = data['参考压力(MPa)']
+    # u0 = np.zeros(len(T))
+    u0 = get_D0(p0)
+    T0 = 273.15-60
     # print('最大误差%.3f\n'%(max(abs(implicit_func((p, Cp),*popt_Cp)))))
-    return popt_D
+    return popt_D,u0,T0
 
-def coefficient_storage(popt_D):
+def coefficient_storage(popt_D,u0,T0):
     data = {
         'T-D': popt_D.tolist(),
+        'u0':u0,
+        'T0':T0,
         # 'p-Cp':popt_Cp.tolist(),
         # 'p-eta':popt_eta.tolist(),
         # 'p-tcx':popt_tcx.tolist(),
@@ -176,9 +184,9 @@ def udata_storage(T,D,filepath):
 
 def main():
     T_u,D_u = trans_func()
-    popt_D= fitting_func(T_u,D_u,)
+    popt_D,u0,T0= fitting_func(T_u,D_u,)
     
-    coefficient_storage(popt_D)
+    coefficient_storage(popt_D,u0,T0)
     
     return 0
 
