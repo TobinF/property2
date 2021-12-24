@@ -7,9 +7,13 @@ import json
 
 
 # 隐函数拟合形式
+# def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8):
+#     u,v = X
+#     return (u**3) + a1*(u**2)*v + a2*u*(v**2) + a3*(v**3) + a4*(u**2) + a5*u*v + a6*(v**2) + a7*u + a8*v 
 def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8):
     u,v = X
-    return (u**3) + a1*(u**2)*v + a2*u*(v**2) + a3*(v**3) + a4*(u**2) + a5*u*v + a6*(v**2) + a7*u + a8*v 
+    f = (u**3) + a1*(u**2)*v + a2*u*(v**2) + a3*(v**3) + a4*(u**2) + a5*u*v + a6*(v**2) + a7*u + a8*v
+    return f
     
 # 读入原始数据
 def load_z0():

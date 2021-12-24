@@ -6,31 +6,29 @@ import cmath
 import json
 
 def get_data():
-    p = input('请输入压力（MPa）:')
-    return float(p)
+    p_start = float(input('请输入起始压力（MPa）:'))
+    p_end = float(input('请输入最终压力（MPa）:'))
+    num = int(input('请输入要获取的数据点数：'))
+    return np.linspace(p_start,p_end,num),np.zeros(num)
   
 def select(mark):
-
     if mark == 1:
         with open('Pressure-Density\\Data\\D0_supercritical_coefficient.json','r',encoding='utf-8') as f:
             data = json.load(f)
         popt_D = np.array(data['p-D'])
         with open('Pressure-Density\\Data\\transfer_supercritical_data.json','r',encoding='utf-8') as f:
             data = json.load(f)
-        D0 = data['密度(kg/m3)']
-        
-        
+        D0 = data['密度(kg/m3)']               
     elif mark == 2:
         with open('Pressure-Density\\Data\\D0_superheat_coefficient.json','r',encoding='utf-8') as f:
             data = json.load(f)
         popt_D = np.array(data['p-D'])
         with open('Pressure-Density\\Data\\transfer_superheat_data.json','r',encoding='utf-8') as f:
             data = json.load(f)
-        D0 = data['密度(kg/m3)']
-                
+        D0 = data['密度(kg/m3)']               
     return popt_D,D0
 
-def solve_z(p,popt,u0,filepath):
+def solve_z(p,popt,u0):
     '''
         显式求解方法
     ''' 
@@ -78,38 +76,38 @@ def solve_z(p,popt,u0,filepath):
     #         f.write(json_data)
     return D
 
-def transfer_D(u0,y,filepath):
-    # y1,y2,y3 = solve_z()
-    # 需要修改成对应转换关系
-    data = {
-    # 'y1':((y1.real + u0)).tolist(),
-    # 'y2':((y2.real + u0)).tolist(),
-    'D':((y.real + u0)).tolist(),
-    }
-    json_data = json.dumps(data,ensure_ascii=False)
-    with open(filepath,'w',encoding='utf-8') as f:       
-            f.write(json_data)
-    return y.real + u0
+# def transfer_D(u0,y,filepath):
+#     # y1,y2,y3 = solve_z()
+#     # 需要修改成对应转换关系
+#     data = {
+#     # 'y1':((y1.real + u0)).tolist(),
+#     # 'y2':((y2.real + u0)).tolist(),
+#     'D':((y.real + u0)).tolist(),
+#     }
+#     json_data = json.dumps(data,ensure_ascii=False)
+#     with open(filepath,'w',encoding='utf-8') as f:       
+#             f.write(json_data)
+#     return y.real + u0
 
 def main():
-    p = get_data()
+    p,D = get_data()
     with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
         data = json.load(f)
     Pc = data["临界压力(MPa)"]
-
-    if p > Pc:
-        mark = 1
-        p = p - Pc
-    else: 
-        mark = 2
-        p = p - 2
-
-    popt_D,D0 = select(mark)
-
-    D = solve_z(p,popt_D,D0,'Pressure-Density\\Data\\fitting_D.json')
+    for i in range(len(p)):
+        if p[i] > Pc:
+            mark = 1
+            temp = p[i] - Pc
+        else: 
+            mark = 2
+            temp = p[i] - 2
+        popt_D,D0 = select(mark)
+        D[i] = solve_z(temp,popt_D,D0)
 
     print('方程系数为：',popt_D)
     print('该压力下对应密度为',D)
+    plt.plot(p,D)
+    plt.show()
     # select()
     
         

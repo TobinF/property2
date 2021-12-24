@@ -114,11 +114,10 @@ def solve_z(T,popt,u0,T0,ut0,filepath):
     # return y1,y2,y3
 
 def main():
-    
-    popt_D,u0,T0= load_coefficient()
+    popt_D,D0,T0= load_coefficient()
     Dt0 = load_transfer_data()
     T,D = load_fitting_nodes()  
-    solve_z(T,popt_D,u0,T0,Dt0,'Temperature-Density\\Data\\fitting_D.json')
+    solve_z(T,popt_D,D0,T0,Dt0,'Temperature-Density\\Data\\fitting_D.json')
     # solve_z(p,popt_Cp,Cp0,'Pressure-Density\\Data\\u_fitting_Cp.json',2)
     # solve_z(p,popt_eta,eta0,'Pressure-Density\\Data\\u_fitting_eta.json',3)
     # solve_z(p,popt_tcx,tcx0,'Pressure-Density\\Data\\u_fitting_tcx.json',4)

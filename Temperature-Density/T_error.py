@@ -17,14 +17,14 @@ def error(z0,z):
 
 def plot_fitting(T,U,u1,u2,u3,mark):
        # 初始数据
-       e1 = error(U,u1)
-       e2 = error(U,u2)
+       # e1 = error(U,u1)
+       # e2 = error(U,u2)
        e3 = error(U,u3)
        
        
        plt.subplot(2,2,1)
-       plt.plot(T,e1,'r')
-       plt.plot(T,e2,'g')
+       # plt.plot(T,e1,'r')
+       # plt.plot(T,e2,'g')
        plt.plot(T,e3,'b')
        plt.xlabel('T',position=(1,0))
        plt.ylabel('e',rotation=0,position=(0,1))
