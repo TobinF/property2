@@ -3,6 +3,10 @@ from math import sqrt
 import numpy as np
 import json
 import cmath
+import get_T_D,T_z0_fitting_supercritical
+
+get_T_D.main()
+T_z0_fitting_supercritical.main()
 
 # 从json中读取系数
 def load_coefficient():
@@ -122,7 +126,6 @@ def main():
     # solve_z(p,popt_eta,eta0,'Pressure-Density\\Data\\u_fitting_eta.json',3)
     # solve_z(p,popt_tcx,tcx0,'Pressure-Density\\Data\\u_fitting_tcx.json',4)
         
-
 if __name__ == '__main__':
     main()
     # print(__name__)

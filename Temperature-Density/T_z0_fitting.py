@@ -1,42 +1,38 @@
 # Standard library imports
 from scipy.optimize import curve_fit
-import matplotlib.pylab as plt
 import numpy as np
 import json
 import cmath
 from math import sqrt
 
-def get_data():
-    p = input('请输入压力（MPa）:')
-    # p = 2
-    return float(p)
-  
+# get_data()、select()、solve_z()、get_D0()
+# 这三个函数用于利用p0解出对应的参考物性u0  
 def select(mark):
-
+    '''
+        根据压力选取需要使用的参数
+    '''
     if mark == 1:
         with open('Pressure-Density\\Data\\D0_supercritical_coefficient.json','r',encoding='utf-8') as f:
             data = json.load(f)
         popt_D = np.array(data['p-D'])
         with open('Pressure-Density\\Data\\transfer_supercritical_data.json','r',encoding='utf-8') as f:
             data = json.load(f)
-        D0 = data['密度(kg/m3)']
-        
-        
+        D0 = data['密度(kg/m3)']        
+       
     elif mark == 2:
         with open('Pressure-Density\\Data\\D0_superheat_coefficient.json','r',encoding='utf-8') as f:
             data = json.load(f)
         popt_D = np.array(data['p-D'])
         with open('Pressure-Density\\Data\\transfer_superheat_data.json','r',encoding='utf-8') as f:
             data = json.load(f)
-        D0 = data['密度(kg/m3)']
-                
+        D0 = data['密度(kg/m3)']                
     return popt_D,D0
 
 def solve_z(p,popt,u0):
     '''
-        显式求解方法
+        根据p0求解物性参数的显式求解方法
     ''' 
-        # 显式求解系数
+    # 显式求解系数
     a = popt[2]
     b = popt[1]*p + popt[5]
     c = popt[0]*((p)**2) + popt[4]*p + popt[7]
@@ -45,21 +41,16 @@ def solve_z(p,popt,u0):
     # 将方程转化为x3+rx=q的形式
     r = float((c/a - (b**2)/(3*a**2)))
     q = float((d/a + (2*b**3)/(27*a**3) - (b*c)/(3*a**2)))
-    # 判别式Δ>0有一个实根；Δ<0有三个实根
-    # 尝试显式计算 D
-    
+    # 解中的参数
     k = 2j/2
     w1 = (1/2)*(-1 + sqrt(3)*k)
     w2 = (1/2)*(-1 - sqrt(3)*k)
-    
+    # 这里只需用到方程3
     y3 = w2*(((-1/2)*q+cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) + w1*(((-1/2)*q-cmath.sqrt((q/2)**2+(r/3)**3))**(1/3)) - b/(3*a)
-
-    D = y3.real + u0
-    
+    D = y3.real + u0   
     return D
 
 def get_D0(p):
-    # p = get_data()
     with open('Pressure-Density\\Data\\original_p_D_data.json','r',encoding='utf-8') as f:
         data = json.load(f)
     Pc = data["临界压力(MPa)"]
@@ -78,8 +69,8 @@ def get_D0(p):
     # print('方程系数为：',popt_D)
     # print('该压力下对应密度为',D)
     return D
-    
-        
+
+
 
 # 隐函数拟合形式
 def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11):
@@ -93,8 +84,7 @@ def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11):
     u0 = get_D0(p0)
     T0 = 273.15-60
     return (1/u0 - 1/u) + a1*(T0/u0 - T/u) + a2*((T0**2)/u0 - (T**2)/u) + a3*((T0**3)/u0 - (T**3)/u) + a4*(1/(u0**2) - 1/(u**2)) + a5*(T0/(u0**2) - T/(u**2)) + a6*((T0**2)/(u0**2) - (T**2)/(u**2)) + a7*((T0**3)/(u0**2) - (T**3)/(u**2)) + a8*(1/(u0**3) - 1/(u**3)) + a9*(T0/(u0**3) - T/(u**3)) + a10*((T0**2)/(u0**3) - (T**2)/(u**3)) + a11*((T0**3)/(u0**3) - (T**3)/(u**3))
-    
-    
+        
 # 读入原始数据
 def load_z0():
     with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
@@ -133,19 +123,17 @@ def trans_func():
     # plt.plot(p,Cp_u)
     # plt.show()
     udata_storage(T_u,D_u,'Temperature-Density\Data\\fitting_nodes.json')
-
     return T_u,D_u
 
 # 用最小二乘法进行拟合，获取获取参数 a1 - a8
 def fitting_func(T,D):
-    z = 0 # 隐式方程的解，及z=F(x,y)=0
-    
+    z = 0 # 隐式方程的解，及z=F(x,y)=0   
     popt_D, pcov1 = curve_fit(implicit_func, (T, D), z)
     # popt_Cp, pcov2 = curve_fit(implicit_func, (p, Cp), z)
     # popt_eta, pcov3 = curve_fit(implicit_func, (p, eta), z)
     # popt_tcx, pcov4 = curve_fit(implicit_func, (p, tcx), z)
-    e = max(abs(implicit_func((T, D),*popt_D)))
-    print('最大误差%.3f\n'%(e))
+    # e = max(abs(implicit_func((T, D),*popt_D)))
+    # print('最大误差%.3f\n'%(e))
     with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
        data = json.load(f)
     p0 = data['参考压力(MPa)']
@@ -184,10 +172,8 @@ def udata_storage(T,D,filepath):
 
 def main():
     T_u,D_u = trans_func()
-    popt_D,u0,T0= fitting_func(T_u,D_u,)
-    
-    coefficient_storage(popt_D,u0,T0)
-    
+    popt_D,u0,T0= fitting_func(T_u,D_u,)    
+    coefficient_storage(popt_D,u0,T0)    
     return 0
 
 if __name__ == '__main__':
