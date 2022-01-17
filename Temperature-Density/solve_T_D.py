@@ -3,10 +3,10 @@ from math import sqrt
 import numpy as np
 import json
 import cmath
-import get_T_D,T_z0_fitting_supercritical
+import get_T_D,T_z0_fitting
 
 get_T_D.main()
-T_z0_fitting_supercritical.main()
+T_z0_fitting.main()
 
 # 从json中读取系数
 def load_coefficient():

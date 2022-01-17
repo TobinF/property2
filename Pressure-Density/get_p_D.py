@@ -13,7 +13,7 @@ r.SETPATHdll(os.environ['RPPREFIX'])
 
 # 定义初试数据
 def init_data():
-    T0 = 273.15-60
+    T0 = 273.15-70
     
     # 组分比例
     mix_ratio = [0.2,0.8] 

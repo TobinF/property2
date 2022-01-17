@@ -71,18 +71,18 @@ def get_D0(p):
     return D
 
 
-
 # 隐函数拟合形式
 def implicit_func(X,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11):
     u,T = X
-    u[0] = 0.001
+    u[0] = 0.0001
+    T[0] = 0.0001
     # u0 = u0[0]
     with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
        data = json.load(f)
     p0 = data['参考压力(MPa)']
     # u0 = np.zeros(len(T))
     u0 = get_D0(p0)
-    T0 = 273.15-60
+    T0 = 273.15-70
     return (1/u0 - 1/u) + a1*(T0/u0 - T/u) + a2*((T0**2)/u0 - (T**2)/u) + a3*((T0**3)/u0 - (T**3)/u) + a4*(1/(u0**2) - 1/(u**2)) + a5*(T0/(u0**2) - T/(u**2)) + a6*((T0**2)/(u0**2) - (T**2)/(u**2)) + a7*((T0**3)/(u0**2) - (T**3)/(u**2)) + a8*(1/(u0**3) - 1/(u**3)) + a9*(T0/(u0**3) - T/(u**3)) + a10*((T0**2)/(u0**3) - (T**2)/(u**3)) + a11*((T0**3)/(u0**3) - (T**3)/(u**3))
         
 # 读入原始数据
@@ -137,9 +137,8 @@ def fitting_func(T,D):
     with open('Temperature-Density\\Data\\original_T_D_data.json','r',encoding='utf-8') as f:
        data = json.load(f)
     p0 = data['参考压力(MPa)']
-    # u0 = np.zeros(len(T))
     u0 = get_D0(p0)
-    T0 = 273.15-60
+    T0 = 273.15-70
     # print('最大误差%.3f\n'%(max(abs(implicit_func((p, Cp),*popt_Cp)))))
     return popt_D,u0,T0
 
